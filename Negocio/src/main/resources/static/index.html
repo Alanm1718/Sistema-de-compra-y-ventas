@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión y Ventas — Despensa Aurora</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root{
+          --bg: #ffffff;
+          --surface: #fbfbfc;
+          --border: #e9e9ec;
+          --ink: #16171b;
+          --ink-soft: #7a7c85;
+          --accent: #1b7a6b;
+          --accent-soft: #e7f3f0;
+          --danger: #c4453a;
+          --danger-soft: #fbeae8;
+          --warn: #b8862f;
+          --warn-soft: #faf1e2;
+        }
+
+        *{ box-sizing: border-box; }
+        body{ margin:0; background: var(--bg); color: var(--ink); font-family: 'Sora', sans-serif; -webkit-font-smoothing: antialiased; }
+
+        .wrap{ max-width: 1120px; margin: 0 auto; padding: 40px 32px 100px; }
+
+        header{ display:flex; justify-content:space-between; align-items:flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 28px; }
+        header .eyebrow{ font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+        header h1{ font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
+        header .sub{ font-size: 14px; color: var(--ink-soft); margin: 0; }
+
+        .toolbar{ display:flex; gap: 12px; align-items:center; flex-wrap: wrap; }
+        #search, #filter-categoria{
+          background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+          padding: 10px 14px; font-family:'Sora', sans-serif; font-size: 14px; color: var(--ink);
+        }
+        #search{ width: 220px; }
+        #search:focus, #filter-categoria:focus{ outline:none; border-color: var(--accent); background:#fff; }
+
+        .btn-primary{
+          font-family:'Sora', sans-serif; font-weight: 600; font-size: 14px;
+          background: var(--ink); color: #fff; border: none; border-radius: 10px;
+          padding: 11px 18px; cursor: pointer; transition: opacity .15s ease;
+        }
+        .btn-primary:hover{ opacity: .85; }
+        .btn-primary.accent{ background: var(--accent); }
+
+        .tabs{ display:flex; gap: 28px; border-bottom: 1px solid var(--border); margin-bottom: 24px; overflow-x: auto; }
+        .tab-btn{
+          background:none; border:none; padding: 10px 2px 12px;
+          font-family:'Sora', sans-serif; font-weight: 600; font-size: 14px;
+          color: var(--ink-soft); cursor:pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+        }
+        .tab-btn.active{ color: var(--ink); border-bottom-color: var(--ink); }
+        .view{ display:none; }
+        .view.active{ display:block; }
+
+        .summary{ display:flex; gap: 32px; margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .summary .stat .num{ font-family:'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; }
+        .summary .stat.warn .num{ color: var(--warn); }
+        .summary .stat.accent .num{ color: var(--accent); }
+        .summary .stat .label{ font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+
+        .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
+
+        .product-card{
+          background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+          padding: 20px; position: relative; transition: border-color .15s ease, transform .15s ease;
+        }
+        .product-card:hover{ border-color: #d8d8dd; transform: translateY(-2px); }
+        .product-card.stock-bajo{ border-color: #ecd9b3; background: var(--warn-soft); }
+
+        .category-tag{ display:inline-block; font-size: 11px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+        .product-card .name{ font-size: 16px; font-weight: 600; margin: 0 0 14px; padding-right: 20px; line-height: 1.3; }
+        .product-card .price{ font-family:'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; margin-bottom: 16px; }
+
+        .stock-row{
+          display:flex; align-items:center; justify-content:space-between;
+          background: #fff; border: 1px solid var(--border); border-radius: 10px;
+          padding: 8px 10px; margin-bottom: 14px;
+        }
+        .stock-row .stock-count{ font-family:'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; }
+        .stock-row .stock-count .unit{ font-weight: 400; color: var(--ink-soft); font-size: 11px; }
+        .stock-btns{ display:flex; gap: 6px; }
+        .stock-btns button{
+          width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--border);
+          background: var(--surface); color: var(--ink); font-family:'IBM Plex Mono', monospace;
+          font-size: 15px; font-weight: 600; cursor: pointer; line-height: 1;
+        }
+
+        .product-card .actions{ display:flex; gap: 6px; }
+        .product-card .actions button{
+          flex:1; font-family:'Sora', sans-serif; font-size: 11px; font-weight: 600;
+          border-radius: 8px; padding: 8px 4px; cursor: pointer; border: 1px solid var(--border);
+          background: #fff; color: var(--ink-soft); transition: all .15s ease;
+        }
+        .product-card .actions button.sell{ border-color: var(--accent); color: var(--accent); }
+        .product-card .actions button.sell:hover{ background: var(--accent-soft); }
+        .product-card .actions button:disabled, #cart-items button:disabled{ opacity: .45; cursor: not-allowed; }
+
+        .empty-state{ grid-column: 1/-1; text-align:center; padding: 80px 20px; color: var(--ink-soft); }
+
+        /* Modales */
+        .overlay{
+          position: fixed; inset: 0; background: rgba(20,20,24,0.45); backdrop-filter: blur(3px);
+          display:flex; align-items:center; justify-content:center; opacity: 0; pointer-events:none;
+          transition: opacity .18s ease; z-index: 50;
+        }
+        .overlay.show{ opacity: 1; pointer-events:auto; }
+        .modal{ background: #fff; border-radius: 18px; width: min(460px, 92vw); max-height: 88vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+
+        .field{ margin-bottom: 16px; }
+        .field label{ display:block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+        .field input, .field select{ width:100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--ink); }
+
+        .toast{
+          position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: #fff;
+          padding: 13px 18px; border-radius: 12px; font-size: 13px; font-weight: 500;
+          display:flex; align-items:center; gap: 10px; opacity: 0; transition: all .2s ease; z-index: 60; pointer-events: none;
+        }
+        .toast.show{ opacity:1; }
+
+        /* Vistas por Rol */
+        .role-admin-only, .role-vendedor-only, .role-cliente-only { display: none !important; }
+
+        body.is-admin .role-admin-only { display: flex !important; }
+        body.is-admin div.role-admin-only { display: block !important; }
+        body.is-admin button.role-admin-only { display: inline-block !important; }
+
+        body.is-vendedor .role-vendedor-only { display: flex !important; }
+        body.is-vendedor div.role-vendedor-only { display: block !important; }
+
+        body.is-cliente .role-cliente-only { display: flex !important; }
+        body.is-cliente div.role-cliente-only { display: block !important; }
+    </style>
+</head>
+<body>
+
+<!-- 1. LOGIN -->
+<div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 text-white rounded-2xl w-full max-w-md p-8 shadow-2xl space-y-6">
+        <div class="text-center space-y-2">
+            <div class="w-12 h-12 bg-indigo-600 rounded-xl mx-auto flex items-center justify-center text-xl text-white">
+                <i class="fa-solid fa-store"></i>
+            </div>
+            <h2 class="text-2xl font-bold">Despensa Aurora</h2>
+            <p class="text-xs text-slate-400">Ingresá tu tipo de cuenta y credenciales</p>
+        </div>
+
+        <form id="loginForm" onsubmit="hacerLoginReal(event)" class="space-y-4">
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Tipo de Usuario</label>
+                <select id="loginType" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <option value="admin">Administrador / Vendedor</option>
+                    <option value="cliente">Cliente</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuario</label>
+                <input type="text" id="loginUser" required placeholder="Ej: admin o cliente1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Contraseña</label>
+                <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-2.5 rounded-lg text-sm transition">
+                Ingresar al Sistema
+            </button>
+            <button type="button" onclick="registrarCliente()" class="w-full border border-slate-700 hover:bg-slate-800 font-semibold py-2.5 rounded-lg text-sm transition">
+                Crear cuenta de cliente
+            </button>
+        </form>
+
+        <div id="alertBox" class="hidden p-3 rounded-lg text-xs font-medium text-center border"></div>
+    </div>
+</div>
+
+<!-- 2. SISTEMA PRINCIPAL -->
+<div id="app-screen" class="wrap hidden">
+
+    <header>
+        <div>
+            <p class="eyebrow">Despensa Aurora</p>
+            <h1 id="app-title">Cargando...</h1>
+            <p class="sub" id="app-sub">Gestión general del comercio</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <span id="user-display" class="block text-xs font-semibold text-slate-800">—</span>
+                <span id="role-display" class="block text-[10px] text-slate-400 font-mono uppercase">—</span>
+            </div>
+
+            <button onclick="cerrarSesion()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Salir</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="toolbar mb-6">
+        <input type="text" id="search" placeholder="Buscar producto…">
+        <select id="filter-categoria">
+            <option value="">Todas las categorías</option>
+        </select>
+        <button class="btn-primary role-admin-only" onclick="openProductModal()">+ Nuevo producto</button>
+    </div>
+
+    <div class="tabs" id="main-tabs">
+        <button class="tab-btn active" data-tab="inventario">Catálogo de Productos</button>
+        <button class="tab-btn role-admin-only role-vendedor-only" data-tab="pedidos" onclick="loadPedidosPendientes()">Gestión de Pedidos <span id="pending-count" class="ml-1"></span></button>
+        <button class="tab-btn role-admin-only role-vendedor-only" data-tab="ventas" onclick="loadVentas()">Ventas y caja</button>
+        <button class="tab-btn role-cliente-only" data-tab="mis-pedidos" onclick="loadMisPedidos()">Mis Pedidos</button>
+    </div>
+
+    <!-- VISTA: INVENTARIO / CATÁLOGO Y CARRITO -->
+    <div class="view active" id="view-inventario">
+        <div class="summary role-admin-only role-vendedor-only">
+            <div class="stat"><div class="num" id="stat-total">0</div><div class="label">productos totales</div></div>
+            <div class="stat"><div class="num" id="stat-units">0</div><div class="label">unidades en stock</div></div>
+            <div class="stat"><div class="num" id="stat-value">Gs. 0</div><div class="label">valor total del inventario</div></div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Grid de Productos -->
+            <div class="flex-1">
+                <div class="grid" id="grid"></div>
+            </div>
+
+            <!-- CARRITO EN TIEMPO REAL (SOLO PARA CLIENTES) -->
+            <div class="w-full lg:w-80 bg-slate-50 border border-slate-200 rounded-2xl p-5 h-fit role-cliente-only sticky top-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-shopping text-emerald-600"></i> Mi Carrito
+                    </h3>
+                    <span id="cart-count" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full">0 ítems</span>
+                </div>
+
+                <div id="cart-items" class="space-y-3 max-h-80 overflow-y-auto mb-4 border-t border-b border-slate-200 py-3">
+                    <p class="text-xs text-slate-400 text-center py-4">Tu carrito está vacío</p>
+                </div>
+
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-semibold text-slate-500">TOTAL:</span>
+                    <span id="cart-total" class="font-mono font-bold text-lg text-slate-900">Gs. 0</span>
+                </div>
+
+                <button onclick="enviarPedidoBackend()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-md shadow-emerald-200">
+                    <i class="fa-solid fa-paper-plane mr-1"></i> Listo - Enviar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA: GESTIÓN DE PEDIDOS (ADMIN / VENDEDOR) -->
+    <div class="view" id="view-pedidos">
+        <h2 class="font-bold text-lg mb-4">Pedidos nuevos</h2>
+        <div id="pedidos-list" class="space-y-4">
+            <p class="text-sm text-slate-400">Cargando pedidos pendientes...</p>
+        </div>
+        <h2 class="font-bold text-lg mt-8 mb-4">En preparación</h2>
+        <div id="preparacion-list" class="space-y-4">
+            <p class="text-sm text-slate-400">Cargando pedidos aprobados...</p>
+        </div>
+        <h2 class="font-bold text-lg mt-8 mb-4">Listos para entregar</h2>
+        <div id="listos-list" class="space-y-4">
+            <p class="text-sm text-slate-400">Cargando pedidos listos...</p>
+        </div>
+    </div>
+
+    <div class="view" id="view-ventas">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+            <div>
+                <h2 class="font-bold text-lg">Ventas y caja</h2>
+                <p class="text-xs text-slate-500 mt-1">Ventas de mostrador y pedidos entregados/cobrados</p>
+            </div>
+            <button type="button" class="btn-primary" onclick="exportarVentas()"><i class="fa-solid fa-download mr-1"></i> Exportar CSV</button>
+        </div>
+
+        <div class="summary mb-6">
+            <div class="stat"><div class="num" id="sales-today">Gs. 0</div><div class="label">vendido hoy</div></div>
+            <div class="stat"><div class="num" id="sales-month">Gs. 0</div><div class="label">vendido este mes</div></div>
+            <div class="stat"><div class="num" id="sales-count">0</div><div class="label">operaciones hoy</div></div>
+        </div>
+
+        <form id="counter-sale-form" class="flex flex-col lg:flex-row gap-3 items-end border-b border-slate-200 pb-6 mb-6">
+            <div class="field flex-1 w-full mb-0">
+                <label for="sale-product">Producto</label>
+                <select id="sale-product" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm"></select>
+            </div>
+            <div class="field w-full lg:w-28 mb-0">
+                <label for="sale-quantity">Cantidad</label>
+                <input id="sale-quantity" type="number" min="1" value="1" required>
+            </div>
+            <div class="field w-full lg:w-44 mb-0">
+                <label for="sale-payment">Forma de pago</label>
+                <select id="sale-payment" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="EFECTIVO">Efectivo</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="TARJETA">Tarjeta</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary accent w-full lg:w-auto"><i class="fa-solid fa-cash-register mr-1"></i> Registrar venta</button>
+        </form>
+
+        <div class="border border-slate-200 bg-slate-50 rounded-2xl p-5 mb-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+                <div>
+                    <h3 class="font-bold text-lg">Venta manual por ticket</h3>
+                    <p class="text-xs text-slate-500 mt-1">Cargá los productos que lleva el cliente y genera el monto final con PDF.</p>
+                </div>
+                <div class="w-full md:w-48">
+                    <label for="manual-sale-payment" class="block text-[11px] font-semibold text-slate-500 mb-1">Forma de pago</label>
+                    <select id="manual-sale-payment" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                        <option value="TARJETA">Tarjeta</option>
+                    </select>
+                </div>
+            </div>
+
+            <form id="manual-sale-form" class="flex flex-col lg:flex-row gap-3 items-end mb-4">
+                <div class="field flex-1 w-full mb-0">
+                    <label for="manual-sale-product">Producto</label>
+                    <select id="manual-sale-product" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm"></select>
+                </div>
+                <div class="field w-full lg:w-28 mb-0">
+                    <label for="manual-sale-quantity">Cantidad</label>
+                    <input id="manual-sale-quantity" type="number" min="1" value="1" required>
+                </div>
+                <button type="submit" class="btn-primary w-full lg:w-auto"><i class="fa-solid fa-plus mr-1"></i> Agregar al ticket</button>
+            </form>
+
+            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-bold text-slate-800">Lista de compra</h4>
+                    <button type="button" onclick="limpiarTicketManual()" class="text-xs text-slate-500 hover:text-slate-700">Vaciar</button>
+                </div>
+
+                <div id="manual-sale-items" class="space-y-2 min-h-[90px]">
+                    <p class="text-sm text-slate-400 py-4 text-center">Todavía no agregaste productos.</p>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-200 pt-3 mt-3">
+                    <span class="text-sm font-semibold text-slate-600">TOTAL</span>
+                    <span id="manual-sale-total" class="font-mono text-xl font-bold text-slate-900">Gs. 0</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2 mt-4">
+                    <button type="button" onclick="registrarVentaManual()" class="btn-primary accent flex-1"><i class="fa-solid fa-cash-register mr-1"></i> Cobrar venta</button>
+                    <button type="button" onclick="descargarPdfVentaManual()" class="btn-primary bg-slate-800 flex-1"><i class="fa-solid fa-file-pdf mr-1"></i> Descargar PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 mb-4">
+            <input type="search" id="sales-search" placeholder="Buscar producto, cliente o pedido…" class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <label class="text-xs text-slate-500 flex items-center gap-2">Desde <input type="date" id="sales-from" class="bg-white border border-slate-300 rounded-lg px-2 py-2"></label>
+            <label class="text-xs text-slate-500 flex items-center gap-2">Hasta <input type="date" id="sales-to" class="bg-white border border-slate-300 rounded-lg px-2 py-2"></label>
+        </div>
+        <div id="sales-list" class="space-y-2">
+            <p class="text-sm text-slate-400">Cargando ventas...</p>
+        </div>
+    </div>
+
+    <!-- VISTA: MIS PEDIDOS (CLIENTE) -->
+    <div class="view" id="view-mis-pedidos">
+        <h2 class="font-bold text-lg mb-4">Estado de Mis Compras</h2>
+        <div id="mis-pedidos-list" class="space-y-4">
+            <p class="text-sm text-slate-400">Cargando tus pedidos...</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: PRODUCTO (NUEVO/EDITAR) -->
+<div class="overlay" id="product-overlay">
+    <div class="modal">
+        <h2 id="modal-product-title" class="font-bold text-lg mb-4">Nuevo Producto</h2>
+        <form id="product-form">
+            <div class="field">
+                <label>Nombre del Producto</label>
+                <input type="text" id="prod-name" required>
+            </div>
+            <div class="field">
+                <label>Categoría</label>
+                <input type="text" id="prod-categoria" required>
+            </div>
+            <div class="field">
+                <label>Precio (Gs.)</label>
+                <input type="number" id="prod-price" min="1" step="1" required>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                    <label>Stock Inicial</label>
+                    <input type="number" id="prod-stock" min="0" required>
+                </div>
+                <div class="field">
+                    <label>Stock Mínimo</label>
+                    <input type="number" id="prod-stockMinimo" min="0" required>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button type="button" class="btn-primary bg-slate-200 text-slate-800 w-full" onclick="closeProductModal()">Cancelar</button>
+                <button type="submit" class="btn-primary accent w-full">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script>
+    const API_BASE = '/api';
+
+    let currentUser = null;
+    let products = [];
+    let sales = [];
+    let carrito = []; // Carrito del cliente [{ productId, name, price, cantidad }]
+    let ticketManual = []; // Ticket manual del administrador [{ productId, name, price, cantidad }]
+    let editingProductId = null;
+    let csrfToken = null;
+    let pendingOrdersTimer = null;
+    let clientRefreshTimer = null;
+
+    async function apiFetch(url, options = {}) {
+        if (!csrfToken) {
+            const csrfResponse = await fetch(`${API_BASE}/v1/auth/csrf`, { credentials: 'same-origin' });
+            if (!csrfResponse.ok) throw new Error('No se pudo iniciar una sesión segura');
+            csrfToken = (await csrfResponse.json()).token;
+        }
+
+        const headers = new Headers(options.headers || {});
+        if (!['GET', 'HEAD', 'OPTIONS'].includes((options.method || 'GET').toUpperCase())) {
+            headers.set('X-XSRF-TOKEN', csrfToken);
+        }
+
+        return fetch(url, { ...options, headers, credentials: 'same-origin' });
+    }
+
+    function mostrarErrorLogin(message) {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.textContent = message;
+        alertBox.classList.remove('hidden');
+        alertBox.classList.add('bg-rose-950', 'text-rose-200', 'border-rose-800');
+    }
+
+    async function leerMensajeError(response, fallback) {
+        const body = await response.json().catch(() => ({}));
+        return body.mensaje || body.detail || fallback;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[character]);
+    }
+
+    // --- AUTENTICACIÓN ---
+    async function hacerLoginReal(e) {
+        e.preventDefault();
+        const type = document.getElementById('loginType').value;
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value;
+        const endpoint = type === 'admin' ? '/v1/auth/admin/login' : '/v1/auth/cliente/login';
+
+        try {
+            const response = await apiFetch(`${API_BASE}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (!response.ok) {
+                mostrarErrorLogin(await leerMensajeError(response, 'Usuario o contraseña incorrectos'));
+                return;
+            }
+
+            const data = await response.json();
+            currentUser = {
+                id: data.adminId || data.clienteId,
+                username: data.username,
+                role: data.role || 'CLIENTE'
+            };
+            iniciarPortal();
+        } catch (error) {
+            mostrarErrorLogin('No se pudo conectar con el servidor');
+        }
+    }
+
+    async function registrarCliente() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value;
+
+        try {
+            const response = await apiFetch(`${API_BASE}/v1/auth/cliente/registro`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (!response.ok) {
+                mostrarErrorLogin(await leerMensajeError(response, 'No se pudo crear la cuenta'));
+                return;
+            }
+
+            const data = await response.json();
+            currentUser = { id: data.clienteId, username: data.username, role: 'CLIENTE' };
+            iniciarPortal();
+        } catch (error) {
+            mostrarErrorLogin('No se pudo conectar con el servidor');
+        }
+    }
+
+    function iniciarPortal() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+
+        document.getElementById('user-display').textContent = currentUser.username;
+        document.getElementById('role-display').textContent = currentUser.role;
+
+        document.body.classList.remove('is-admin', 'is-vendedor', 'is-cliente');
+
+        if (currentUser.role === 'ADMIN') {
+            document.body.classList.add('is-admin');
+            document.getElementById('app-title').textContent = 'Panel de Administración';
+        } else if (currentUser.role === 'VENDEDOR') {
+            document.body.classList.add('is-vendedor');
+            document.getElementById('app-title').textContent = 'Gestión de Pedidos';
+        } else {
+            document.body.classList.add('is-cliente');
+            document.getElementById('app-title').textContent = 'Catálogo de Compras';
+        }
+
+        loadProducts();
+        if (currentUser.role === 'ADMIN' || currentUser.role === 'VENDEDOR') {
+            loadPedidosPendientes();
+            pendingOrdersTimer = setInterval(() => {
+                loadPedidosPendientes();
+                if (document.getElementById('view-ventas').classList.contains('active')) loadVentas();
+            }, 15000);
+        } else if (currentUser.role === 'CLIENTE') {
+            clientRefreshTimer = setInterval(() => {
+                loadProducts();
+                if (document.getElementById('view-mis-pedidos').classList.contains('active')) {
+                    loadMisPedidos();
+                }
+            }, 10000);
+        }
+    }
+
+    async function cerrarSesion() {
+        try {
+            await apiFetch(`${API_BASE}/v1/auth/logout`, { method: 'POST' });
+        } catch (error) {
+            // La interfaz debe cerrar la sesión local aunque el servidor no responda.
+        } finally {
+            csrfToken = null;
+        }
+        if (pendingOrdersTimer) clearInterval(pendingOrdersTimer);
+        if (clientRefreshTimer) clearInterval(clientRefreshTimer);
+        currentUser = null;
+        carrito = [];
+        document.getElementById('app-screen').classList.add('hidden');
+        document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    // --- CARGA Y RENDERIZADO DE PRODUCTOS ---
+    async function loadProducts() {
+        try {
+            const res = await apiFetch(`${API_BASE}/v1/products`);
+            if (!res.ok) throw new Error('Error al obtener productos');
+            products = await res.json();
+            let stockAdjusted = false;
+            carrito = carrito.flatMap(item => {
+                const product = products.find(candidate => candidate.id === item.productId);
+                if (!product || Number(product.stock) <= 0) {
+                    stockAdjusted = true;
+                    return [];
+                }
+                const available = Number(product.stock);
+                if (item.cantidad > available) {
+                    item.cantidad = available;
+                    stockAdjusted = true;
+                }
+                item.price = Number(product.price);
+                return [item];
+            });
+            updateCategorias();
+            updateProductosVenta();
+            renderProducts();
+            renderCarrito();
+            if (stockAdjusted) showToast('Actualizamos tu carrito según el stock disponible', false);
+        } catch (err) {
+            showToast('Error de conexión al cargar productos', false);
+        }
+    }
+
+    function renderProducts() {
+        const term = document.getElementById('search').value.toLowerCase();
+        const cat = document.getElementById('filter-categoria').value;
+
+        const filtered = products.filter(p =>
+            p.name.toLowerCase().includes(term) && (!cat || p.categoria === cat)
+        );
+
+        const grid = document.getElementById('grid');
+        const isAdmin = currentUser.role === 'ADMIN';
+        const isCliente = currentUser.role === 'CLIENTE';
+
+        document.getElementById('stat-total').textContent = products.length;
+        document.getElementById('stat-units').textContent = products.reduce((s, p) => s + Number(p.stock), 0);
+        document.getElementById('stat-value').textContent = 'Gs. ' + products.reduce((s, p) => s + (Number(p.price) * Number(p.stock)), 0).toLocaleString('es-PY');
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><div class="big">No hay productos disponibles</div></div>';
+            return;
+        }
+
+        grid.innerHTML = filtered.map(p => `
+            <div class="product-card">
+                <div class="category-tag">${escapeHtml(p.categoria || 'Gral')}</div>
+                <div class="name">${escapeHtml(p.name)}</div>
+                <div class="price">Gs. ${Number(p.price).toLocaleString('es-PY')}</div>
+
+                <div class="stock-row">
+                    <div class="stock-count">${p.stock} <span class="unit">disponibles</span></div>
+                </div>
+
+                <div class="actions">
+                    ${isCliente ? `
+                    <button class="sell" data-add-product="${p.id}" ${Number(p.stock) <= (carrito.find(item => item.productId === p.id)?.cantidad || 0) ? 'disabled' : ''}>
+                        <i class="fa-solid fa-cart-plus mr-1"></i> ${Number(p.stock) <= 0 ? 'Sin stock' : Number(p.stock) <= (carrito.find(item => item.productId === p.id)?.cantidad || 0) ? 'Máximo en carrito' : 'Agregar'}
+                    </button>
+                    ` : `
+                    ${isAdmin ? `<button onclick="editProduct(${p.id})">Editar</button><button onclick="deleteProduct(${p.id})" style="color:var(--danger)">Borrar</button>` : ''}
+                    `}
+                </div>
+            </div>
+        `).join('');
+
+        grid.querySelectorAll('[data-add-product]').forEach(button => {
+            button.addEventListener('click', () => agregarAlCarrito(Number(button.dataset.addProduct)));
+        });
+    }
+
+    function updateCategorias() {
+        const select = document.getElementById('filter-categoria');
+        const categorias = [...new Set(products.map(p => p.categoria).filter(Boolean))];
+        select.innerHTML = '<option value="">Todas las categorías</option>' +
+            categorias.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+
+    // --- LÓGICA DEL CARRITO (CLIENTE) ---
+    function agregarAlCarrito(productId) {
+        const product = products.find(item => item.id === productId);
+        if (!product) return;
+        const item = carrito.find(i => i.productId === productId);
+        if ((item?.cantidad || 0) >= Number(product.stock)) {
+            showToast('No hay más unidades disponibles', false);
+            return;
+        }
+        if (item) item.cantidad++;
+        else carrito.push({ productId, name: product.name, price: Number(product.price), cantidad: 1 });
+        renderCarrito();
+        renderProducts();
+        showToast(`Agregado: ${product.name}`);
+    }
+
+    function cambiarCantidadCarrito(productId, delta) {
+        const item = carrito.find(i => i.productId === productId);
+        if (!item) return;
+        const product = products.find(candidate => candidate.id === productId);
+        if (delta > 0 && product && item.cantidad >= Number(product.stock)) {
+            showToast('No hay más unidades disponibles', false);
+            return;
+        }
+        item.cantidad += delta;
+        if (item.cantidad <= 0) {
+            carrito = carrito.filter(i => i.productId !== productId);
+        }
+        renderCarrito();
+        renderProducts();
+    }
+
+    function renderCarrito() {
+        const container = document.getElementById('cart-items');
+        const countElem = document.getElementById('cart-count');
+        const totalElem = document.getElementById('cart-total');
+
+        if (carrito.length === 0) {
+            container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Tu carrito está vacío</p>';
+            countElem.textContent = '0 ítems';
+            totalElem.textContent = 'Gs. 0';
+            return;
+        }
+
+        let total = 0;
+        let cantidadTotal = 0;
+
+        container.innerHTML = carrito.map(i => {
+            const subtotal = i.price * i.cantidad;
+            total += subtotal;
+            cantidadTotal += i.cantidad;
+            const product = products.find(candidate => candidate.id === i.productId);
+            const atStockLimit = product && i.cantidad >= Number(product.stock);
+            return `
+                <div class="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-slate-200">
+                    <div class="flex-1 pr-2">
+                        <p class="font-semibold text-slate-800">${escapeHtml(i.name)}</p>
+                        <p class="text-[10px] text-slate-400">Gs. ${i.price.toLocaleString('es-PY')} x ${i.cantidad}</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="cambiarCantidadCarrito(${i.productId}, -1)" class="w-5 h-5 bg-slate-100 font-bold text-slate-600 rounded flex items-center justify-center">-</button>
+                        <span class="font-mono text-slate-700 font-semibold px-1">${i.cantidad}</span>
+                        <button onclick="cambiarCantidadCarrito(${i.productId}, 1)" ${atStockLimit ? 'disabled title="Stock máximo disponible"' : ''} class="w-5 h-5 bg-slate-100 font-bold text-slate-600 rounded flex items-center justify-center">+</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        countElem.textContent = `${cantidadTotal} ítems`;
+        totalElem.textContent = `Gs. ${total.toLocaleString('es-PY')}`;
+    }
+
+    // --- ENVIAR PEDIDO AL BACKEND JAVA ---
+    async function enviarPedidoBackend() {
+        if (carrito.length === 0) {
+            showToast('El carrito está vacío', false);
+            return;
+        }
+
+        // Estructura coincidente con PedidoRequest.java
+        const payload = {
+            items: carrito.map(i => ({
+                productId: i.productId,
+                cantidad: i.cantidad
+            }))
+        };
+
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: payload.items })
+            });
+
+            if (res.ok) {
+                showToast('¡Pedido enviado con éxito!');
+                carrito = [];
+                renderCarrito();
+                document.querySelector('[data-tab="mis-pedidos"]').click();
+            } else {
+                showToast(await leerMensajeError(res, 'Error al procesar pedido'), false);
+            }
+        } catch (e) {
+            showToast('No se pudo conectar con el servidor', false);
+        }
+    }
+
+    // --- CONTROL DE PEDIDOS (ADMIN/VENDEDOR) ---
+    async function loadPedidosPendientes() {
+        const container = document.getElementById('pedidos-list');
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos/pendientes`);
+            if (!res.ok) throw new Error('No se pudieron cargar los pedidos');
+            const pedidos = await res.json();
+            document.getElementById('pending-count').textContent = pedidos.length ? `(${pedidos.length})` : '';
+            loadPedidosEnPreparacion();
+            loadPedidosListos();
+
+            if (pedidos.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500 italic">No hay pedidos pendientes de revisión.</p>';
+                return;
+            }
+
+            container.innerHTML = pedidos.map(p => `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-slate-800">Pedido #${p.id}</span>
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${p.estado}</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Cliente: <b>${escapeHtml(p.cliente ? p.cliente.username : 'N/A')}</b> | Fecha: ${new Date(p.fecha).toLocaleString()}</p>
+                        <div class="mt-2 text-xs text-slate-600">
+                            <b>Ítems:</b> ${p.items.map(i => `${escapeHtml(i.product ? i.product.name : 'Producto')} (x${i.cantidad})`).join(', ')}
+                        </div>
+                        <p class="mt-1 font-mono font-bold text-slate-900 text-sm">Total: Gs. ${p.total ? p.total.toLocaleString('es-PY') : 0}</p>
+                    </div>
+
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button onclick="aprobarPedido(${p.id})" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+                            <i class="fa-solid fa-check mr-1"></i> Aprobar
+                        </button>
+                        <button onclick="rechazarPedido(${p.id})" class="flex-1 md:flex-none bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+                            <i class="fa-solid fa-xmark mr-1"></i> Rechazar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '<p class="text-xs text-rose-500">Error al cargar pedidos pendientes</p>';
+        }
+    }
+
+    async function loadPedidosEnPreparacion() {
+        const container = document.getElementById('preparacion-list');
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos/preparacion`);
+            if (!res.ok) throw new Error('No se pudieron cargar los pedidos');
+            const pedidos = await res.json();
+            if (pedidos.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500 italic">No hay pedidos en preparación.</p>';
+                return;
+            }
+
+            container.innerHTML = pedidos.map(p => `
+                <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-slate-800">Pedido #${p.id}</span>
+                            <span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${escapeHtml(p.estado)}</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Cliente: <b>${escapeHtml(p.cliente ? p.cliente.username : 'N/A')}</b> | Fecha: ${new Date(p.fecha).toLocaleString()}</p>
+                        <p class="mt-2 text-xs text-slate-600"><b>Ítems:</b> ${p.items.map(i => `${escapeHtml(i.product ? i.product.name : 'Producto')} (x${i.cantidad})`).join(', ')}</p>
+                        <p class="mt-1 font-mono font-bold text-slate-900 text-sm">Total: Gs. ${p.total ? p.total.toLocaleString('es-PY') : 0}</p>
+                    </div>
+                    <div class="w-full md:w-auto">
+                        <button onclick="marcarPedidoListo(${p.id})" class="bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+                            Marcar listo
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-xs text-rose-500">Error al cargar pedidos en preparación</p>';
+        }
+    }
+
+    async function loadPedidosListos() {
+        const container = document.getElementById('listos-list');
+        try {
+            const response = await apiFetch(`${API_BASE}/pedidos/listos`);
+            if (!response.ok) throw new Error('No se pudieron cargar los pedidos listos');
+            const pedidos = await response.json();
+            if (!pedidos.length) {
+                container.innerHTML = '<p class="text-sm text-slate-500 italic">No hay pedidos listos para entregar.</p>';
+                return;
+            }
+
+            container.innerHTML = pedidos.map(p => `
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-slate-800">Pedido #${p.id}</span>
+                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">LISTO</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Cliente: <b>${escapeHtml(p.cliente ? p.cliente.username : 'N/A')}</b> | Fecha: ${new Date(p.fecha).toLocaleString()}</p>
+                        <p class="mt-2 text-xs text-slate-600"><b>Ítems:</b> ${p.items.map(i => `${escapeHtml(i.product ? i.product.name : 'Producto')} (x${i.cantidad})`).join(', ')}</p>
+                        <p class="mt-1 font-mono font-bold text-slate-900 text-sm">Total a cobrar: Gs. ${p.total ? p.total.toLocaleString('es-PY') : 0}</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                        <select id="payment-order-${p.id}" aria-label="Forma de pago del pedido ${p.id}" class="bg-white border border-slate-300 rounded-lg px-2 py-2 text-xs">
+                            <option value="EFECTIVO">Efectivo</option>
+                            <option value="TRANSFERENCIA">Transferencia</option>
+                            <option value="TARJETA">Tarjeta</option>
+                        </select>
+                        <button onclick="entregarPedido(${p.id})" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+                            Entregar y cobrar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-xs text-rose-500">Error al cargar pedidos listos</p>';
+        }
+    }
+
+    async function aprobarPedido(id) {
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos/${id}/aprobar`, { method: 'PUT' });
+            if (res.ok) {
+                showToast('Pedido aprobado y stock descontado');
+                loadPedidosPendientes();
+                loadProducts();
+            } else {
+                showToast(await leerMensajeError(res, 'Error al aprobar pedido'), false);
+            }
+        } catch (e) {
+            showToast('Error de conexión', false);
+        }
+    }
+
+    async function rechazarPedido(id) {
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos/${id}/rechazar`, { method: 'PUT' });
+            if (res.ok) {
+                showToast('Pedido cancelado');
+                loadPedidosPendientes();
+            } else {
+                showToast(await leerMensajeError(res, 'Error al rechazar pedido'), false);
+            }
+        } catch (e) {
+            showToast('Error de conexión', false);
+        }
+    }
+
+    async function marcarPedidoListo(id) {
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos/${id}/listo`, { method: 'PUT' });
+            if (!res.ok) {
+                showToast(await leerMensajeError(res, 'No se pudo marcar el pedido como listo'), false);
+                return;
+            }
+            showToast('Pedido listo para entregar');
+            loadPedidosPendientes();
+        } catch (error) {
+            showToast('Error de conexión', false);
+        }
+    }
+
+    async function entregarPedido(id) {
+        const formaPago = document.getElementById(`payment-order-${id}`).value;
+        try {
+            const response = await apiFetch(`${API_BASE}/pedidos/${id}/entregar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ formaPago })
+            });
+            if (!response.ok) {
+                showToast(await leerMensajeError(response, 'No se pudo registrar la entrega'), false);
+                return;
+            }
+            showToast('Entrega confirmada y venta registrada');
+            await loadPedidosPendientes();
+            await loadVentas();
+        } catch (error) {
+            showToast('Error de conexión al registrar la entrega', false);
+        }
+    }
+
+    function updateProductosVenta() {
+        const select = document.getElementById('sale-product');
+        const manualSelect = document.getElementById('manual-sale-product');
+        if (!select && !manualSelect) return;
+        const selectedId = select ? select.value : (manualSelect ? manualSelect.value : '');
+        const availableProducts = products.filter(product => Number(product.stock) > 0);
+
+        if (select) {
+            select.innerHTML = availableProducts.length
+                ? availableProducts.map(product => `<option value="${product.id}">${escapeHtml(product.name)} · ${Number(product.stock)} disponibles · Gs. ${Number(product.price).toLocaleString('es-PY')}</option>`).join('')
+                : '<option value="">No hay productos con stock</option>';
+            if (availableProducts.some(product => String(product.id) === selectedId)) select.value = selectedId;
+        }
+
+        if (manualSelect) {
+            manualSelect.innerHTML = availableProducts.length
+                ? availableProducts.map(product => `<option value="${product.id}">${escapeHtml(product.name)} · ${Number(product.stock)} disponibles · Gs. ${Number(product.price).toLocaleString('es-PY')}</option>`).join('')
+                : '<option value="">No hay productos con stock</option>';
+            if (availableProducts.some(product => String(product.id) === selectedId)) manualSelect.value = selectedId;
+        }
+
+        renderTicketManual();
+    }
+
+    function renderTicketManual() {
+        const container = document.getElementById('manual-sale-items');
+        const totalLabel = document.getElementById('manual-sale-total');
+        if (!container || !totalLabel) return;
+
+        if (ticketManual.length === 0) {
+            container.innerHTML = '<p class="text-sm text-slate-400 py-4 text-center">Todavía no agregaste productos.</p>';
+            totalLabel.textContent = 'Gs. 0';
+            return;
+        }
+
+        let total = 0;
+        container.innerHTML = ticketManual.map(item => {
+            const subtotal = item.price * item.cantidad;
+            total += subtotal;
+            return `
+                <div class="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-lg p-2">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-slate-800 text-sm truncate">${escapeHtml(item.name)}</p>
+                        <p class="text-[10px] text-slate-500">Gs. ${Number(item.price).toLocaleString('es-PY')} c/u</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="cambiarCantidadTicketManual(${item.productId}, -1)" class="w-6 h-6 rounded bg-slate-100 text-slate-600 text-sm font-bold">-</button>
+                        <span class="font-mono text-sm text-slate-700 w-6 text-center">${item.cantidad}</span>
+                        <button type="button" onclick="cambiarCantidadTicketManual(${item.productId}, 1)" class="w-6 h-6 rounded bg-slate-100 text-slate-600 text-sm font-bold">+</button>
+                    </div>
+                    <span class="font-mono text-sm font-semibold text-slate-800 min-w-[70px] text-right">Gs. ${subtotal.toLocaleString('es-PY')}</span>
+                </div>
+            `;
+        }).join('');
+
+        totalLabel.textContent = `Gs. ${total.toLocaleString('es-PY')}`;
+    }
+
+    function cambiarCantidadTicketManual(productId, delta) {
+        const item = ticketManual.find(entry => entry.productId === productId);
+        if (!item) return;
+
+        const product = products.find(entry => entry.id === productId);
+        if (!product) return;
+
+        const nuevaCantidad = item.cantidad + delta;
+        if (nuevaCantidad <= 0) {
+            ticketManual = ticketManual.filter(entry => entry.productId !== productId);
+        } else if (nuevaCantidad > Number(product.stock)) {
+            showToast('La cantidad supera el stock disponible', false);
+            return;
+        } else {
+            item.cantidad = nuevaCantidad;
+        }
+
+        renderTicketManual();
+    }
+
+    function limpiarTicketManual() {
+        ticketManual = [];
+        renderTicketManual();
+    }
+
+    function agregarProductoTicketManual(productId, cantidad) {
+        const product = products.find(item => item.id === productId);
+        if (!product) {
+            showToast('Producto no encontrado', false);
+            return;
+        }
+
+        if (cantidad < 1) {
+            showToast('La cantidad debe ser mayor a 0', false);
+            return;
+        }
+
+        const current = ticketManual.find(item => item.productId === productId);
+        const nuevaCantidad = (current ? current.cantidad : 0) + cantidad;
+        if (nuevaCantidad > Number(product.stock)) {
+            showToast('La cantidad supera el stock disponible', false);
+            return;
+        }
+
+        if (current) {
+            current.cantidad = nuevaCantidad;
+        } else {
+            ticketManual.push({ productId, name: product.name, price: Number(product.price), cantidad });
+        }
+
+        renderTicketManual();
+    }
+
+    async function registrarVentaManual() {
+        if (ticketManual.length === 0) {
+            showToast('Agregá al menos un producto al ticket', false);
+            return;
+        }
+
+        const payload = {
+            formaPago: document.getElementById('manual-sale-payment').value,
+            items: ticketManual.map(item => ({ productId: item.productId, cantidad: item.cantidad }))
+        };
+
+        try {
+            const response = await apiFetch(`${API_BASE}/v1/ventas/manual`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                showToast(await leerMensajeError(response, 'No se pudo registrar la venta manual'), false);
+                return;
+            }
+
+            const data = await response.json();
+            showToast(`Venta registrada. Total: Gs. ${Number(data.total || 0).toLocaleString('es-PY')}`);
+            ticketManual = [];
+            renderTicketManual();
+            await loadProducts();
+            await loadVentas();
+        } catch (error) {
+            showToast('Error al registrar la venta manual', false);
+        }
+    }
+
+    async function descargarPdfVentaManual() {
+        if (ticketManual.length === 0) {
+            showToast('Primero armá el ticket de la compra', false);
+            return;
+        }
+
+        const payload = {
+            formaPago: document.getElementById('manual-sale-payment').value,
+            items: ticketManual.map(item => ({ productId: item.productId, cantidad: item.cantidad }))
+        };
+
+        try {
+            const response = await apiFetch(`${API_BASE}/v1/ventas/manual/pdf`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                showToast(await leerMensajeError(response, 'No se pudo generar el PDF'), false);
+                return;
+            }
+
+            const blob = await response.blob();
+            const href = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = href;
+            link.download = 'venta-manual.pdf';
+            link.click();
+            URL.revokeObjectURL(href);
+            showToast('PDF descargado');
+        } catch (error) {
+            showToast('Error al generar el PDF', false);
+        }
+    }
+
+    async function loadVentas() {
+        const container = document.getElementById('sales-list');
+        try {
+            const response = await apiFetch(`${API_BASE}/v1/ventas`);
+            if (!response.ok) throw new Error('No se pudieron cargar las ventas');
+            sales = await response.json();
+            renderVentas();
+        } catch (error) {
+            container.innerHTML = '<p class="text-sm text-rose-600">No se pudo cargar el registro de ventas.</p>';
+        }
+    }
+
+    function fechaLocalKey(value) {
+        const date = new Date(value);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function ventaTransactionKey(sale) {
+        return sale.pedido?.id ? `pedido-${sale.pedido.id}` : `venta-${sale.id}`;
+    }
+
+    function renderVentas() {
+        const today = fechaLocalKey(new Date());
+        const month = today.slice(0, 7);
+        const totalOf = items => items.reduce((total, sale) => total + Number(sale.total || 0), 0);
+        const todaySales = sales.filter(sale => fechaLocalKey(sale.fecha) === today);
+        const monthSales = sales.filter(sale => fechaLocalKey(sale.fecha).startsWith(month));
+        document.getElementById('sales-today').textContent = `Gs. ${totalOf(todaySales).toLocaleString('es-PY')}`;
+        document.getElementById('sales-month').textContent = `Gs. ${totalOf(monthSales).toLocaleString('es-PY')}`;
+        document.getElementById('sales-count').textContent = new Set(todaySales.map(ventaTransactionKey)).size;
+
+        const search = document.getElementById('sales-search').value.trim().toLowerCase();
+        const from = document.getElementById('sales-from').value;
+        const to = document.getElementById('sales-to').value;
+        const filtered = sales.filter(sale => {
+            const date = fechaLocalKey(sale.fecha);
+            const content = `${sale.product?.name || ''} ${sale.pedido?.cliente?.username || ''} ${sale.pedido?.id || ''} ${sale.formaPago || ''}`.toLowerCase();
+            return (!search || content.includes(search)) && (!from || date >= from) && (!to || date <= to);
+        });
+
+        const container = document.getElementById('sales-list');
+        if (!filtered.length) {
+            container.innerHTML = '<p class="text-sm text-slate-500 py-4">No hay ventas para esos filtros.</p>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(sale => `
+            <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1.5fr_1fr_1fr] gap-2 border-b border-slate-200 py-3 text-sm">
+                <div>
+                    <p class="font-semibold text-slate-800">${sale.pedido?.id ? `Pedido #${sale.pedido.id}` : `Venta #${sale.id}`}</p>
+                    <p class="text-xs text-slate-500">${new Date(sale.fecha).toLocaleString('es-PY')}</p>
+                </div>
+                <div>
+                    <p class="font-medium">${escapeHtml(sale.product?.name || 'Producto')}</p>
+                    <p class="text-xs text-slate-500">${sale.pedido?.cliente ? `Cliente: ${escapeHtml(sale.pedido.cliente.username)}` : 'Mostrador'} · ${Number(sale.cantidad)} × Gs. ${Number(sale.precioUnitario).toLocaleString('es-PY')}</p>
+                </div>
+                <div class="text-xs text-slate-600 self-center">${escapeHtml(sale.formaPago || 'NO ESPECIFICADO')}</div>
+                <div class="font-mono font-semibold text-slate-900 self-center md:text-right">Gs. ${Number(sale.total || 0).toLocaleString('es-PY')}</div>
+            </div>
+        `).join('');
+    }
+
+    async function registrarVentaMostrador(event) {
+        event.preventDefault();
+        const productId = Number(document.getElementById('sale-product').value);
+        const cantidad = Number(document.getElementById('sale-quantity').value);
+        const formaPago = document.getElementById('sale-payment').value;
+        if (!productId || cantidad < 1) {
+            showToast('Selecciona producto y cantidad válida', false);
+            return;
+        }
+
+        try {
+            const response = await apiFetch(`${API_BASE}/v1/ventas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, cantidad, formaPago })
+            });
+            if (!response.ok) {
+                showToast(await leerMensajeError(response, 'No se pudo registrar la venta'), false);
+                return;
+            }
+            document.getElementById('sale-quantity').value = '1';
+            showToast('Venta de mostrador registrada');
+            await loadProducts();
+            await loadVentas();
+        } catch (error) {
+            showToast('Error de conexión al registrar la venta', false);
+        }
+    }
+
+    function exportarVentas() {
+        const rows = [['Fecha', 'Tipo', 'Pedido', 'Cliente', 'Producto', 'Cantidad', 'Precio unitario', 'Total', 'Forma de pago']];
+        sales.forEach(sale => rows.push([
+            sale.fecha,
+            sale.pedido ? 'PEDIDO' : 'MOSTRADOR',
+            sale.pedido?.id || '',
+            sale.pedido?.cliente?.username || '',
+            sale.product?.name || '',
+            sale.cantidad,
+            sale.precioUnitario,
+            sale.total,
+            sale.formaPago || 'NO ESPECIFICADO'
+        ]));
+        const csv = rows.map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
+        link.download = 'ventas.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    // --- CONSULTAR MIS PEDIDOS (CLIENTE) ---
+    async function loadMisPedidos() {
+        const container = document.getElementById('mis-pedidos-list');
+        try {
+            const res = await apiFetch(`${API_BASE}/pedidos/cliente`);
+            if (!res.ok) throw new Error('No se pudo cargar el historial');
+            const pedidos = await res.json();
+
+            if (pedidos.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500 italic">Aún no has realizado ningún pedido.</p>';
+                return;
+            }
+
+            container.innerHTML = pedidos.map(p => `
+                <div class="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-slate-800 text-sm">Pedido #${p.id}</span>
+                        <p class="text-xs text-slate-400">${new Date(p.fecha).toLocaleString()}</p>
+                        <p class="text-xs text-slate-600 mt-2"><b>Productos:</b> ${p.items.map(i => `${escapeHtml(i.product ? i.product.name : 'Producto')} x${i.cantidad}`).join(', ')}</p>
+                        <p class="font-mono font-bold text-slate-800 text-xs mt-1">Total: Gs. ${p.total ? p.total.toLocaleString('es-PY') : 0}</p>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${p.estado === 'LISTO' || p.estado === 'ENTREGADO' ? 'bg-emerald-100 text-emerald-800' : p.estado === 'APROBADO' ? 'bg-sky-100 text-sky-800' : p.estado === 'CANCELADO' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+                            ${p.estado === 'LISTO' ? 'LISTO PARA RETIRAR' : p.estado === 'APROBADO' ? 'EN PREPARACIÓN' : p.estado === 'PENDIENTE' ? 'RECIBIDO' : escapeHtml(p.estado)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '<p class="text-xs text-rose-500">Error al obtener historial</p>';
+        }
+    }
+
+    // --- GESTIÓN DE PRODUCTOS (ADMIN) ---
+    function openProductModal() {
+        editingProductId = null;
+        document.getElementById('modal-product-title').textContent = 'Nuevo Producto';
+        document.getElementById('product-form').reset();
+        document.getElementById('product-overlay').classList.add('show');
+    }
+
+    function closeProductModal() {
+        document.getElementById('product-overlay').classList.remove('show');
+    }
+
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('prod-name').value,
+            categoria: document.getElementById('prod-categoria').value,
+            price: parseFloat(document.getElementById('prod-price').value),
+            stock: parseInt(document.getElementById('prod-stock').value),
+            stockMinimo: parseInt(document.getElementById('prod-stockMinimo').value)
+        };
+
+        const url = editingProductId ? `${API_BASE}/v1/products/${editingProductId}` : `${API_BASE}/v1/products`;
+        const method = editingProductId ? 'PUT' : 'POST';
+
+        try {
+            const res = await apiFetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                showToast(error.mensaje || 'Error al guardar producto', false);
+                return;
+            }
+
+            showToast(editingProductId ? 'Producto actualizado' : 'Producto guardado');
+            closeProductModal();
+            loadProducts();
+        } catch (e) {
+            showToast('Error al guardar producto', false);
+        }
+    });
+
+    // Búsqueda y Filtros
+    document.getElementById('search').addEventListener('input', renderProducts);
+    document.getElementById('filter-categoria').addEventListener('change', renderProducts);
+    document.getElementById('sales-search').addEventListener('input', renderVentas);
+    document.getElementById('sales-from').addEventListener('change', renderVentas);
+    document.getElementById('sales-to').addEventListener('change', renderVentas);
+    document.getElementById('counter-sale-form').addEventListener('submit', registrarVentaMostrador);
+    document.getElementById('manual-sale-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const productId = Number(document.getElementById('manual-sale-product').value);
+        const cantidad = Number(document.getElementById('manual-sale-quantity').value);
+        agregarProductoTicketManual(productId, cantidad);
+        document.getElementById('manual-sale-quantity').value = '1';
+    });
+
+    // Sistema de Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('view-' + btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    function showToast(msg, ok = true) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.style.background = ok ? 'var(--ink)' : 'var(--danger)';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    async function restaurarSesion() {
+        try {
+            const response = await apiFetch(`${API_BASE}/v1/auth/session`);
+            if (response.ok) {
+                currentUser = await response.json();
+                iniciarPortal();
+            }
+        } catch (error) {
+            currentUser = null;
+        }
+    }
+
+    window.addEventListener('load', restaurarSesion);
+</script>
+</body>
+</html>
